@@ -15,8 +15,8 @@ export const saveFileMetadata = async (file: Omit<File, 'id' | 'upload_date'>): 
 export const getFiles = async (userId: number, listSize: number, page: number): Promise<File[]> => {
   const offset = (page - 1) * listSize;
   const [rows] = await pool.execute(
-    'SELECT * FROM files WHERE user_id = ? LIMIT ? OFFSET ?',
-    [userId, listSize, offset]
+    `SELECT * FROM files WHERE user_id = ? LIMIT ${listSize} OFFSET ${offset}`,
+    [userId]
   );
   return rows as File[];
 };
