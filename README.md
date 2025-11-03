@@ -49,6 +49,34 @@
     Сервер будет работать на порту, указанном в вашем файле `.env` (по умолчанию: 3000).
 
 
+## Разработка
+
+### Запуск тестов
+
+Для запуска всех тестов проекта выполните:
+
+```bash
+npm test
+```
+
+### Проверка кода с помощью ESLint
+
+Для проверки кода на соответствие стандартам и выявления потенциальных ошибок выполните:
+
+```bash
+npm run lint
+```
+
+### Форматирование кода с помощью Prettier
+
+Для автоматического форматирования кода согласно настроенным правилам выполните:
+
+```bash
+npm run format
+```
+
+Все основные API эндпоинты покрыты тестами для обеспечения качества и стабильности.
+
 ## Тестирование API с помощью Postman
 
 Вы можете тестировать конечные точки API с помощью Postman.
@@ -64,8 +92,8 @@
         *   Тело: `{ "login": "testuser", "password": "password123" }`
     *   `POST http://localhost:3000/auth/signin/new_token`
         *   Тело: `{ "refreshToken": "your_refresh_token_here" }`
-    *   `GET http://localhost:3000/auth/logout`
-        *   Заголовки: `Authorization: Bearer your_access_token_here`
+    *   `POST http://localhost:3000/auth/logout`
+        *   Тело: `{ "refreshToken": "your_refresh_token_here" }`
 
 3.  **Конечные точки управления файлами:**
     *   `POST http://localhost:3000/file/upload`

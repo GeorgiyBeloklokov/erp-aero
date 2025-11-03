@@ -3,21 +3,19 @@ import express from 'express';
 import authRouter from './auth.routes';
 import * as authService from '../services/auth.service';
 import * as authMiddleware from '../middlewares/auth.middleware';
-import pool from '../db'; // Import the pool
+import pool from '../db';
 
 const app = express();
 app.use(express.json());
-app.use(authRouter); // Mount authRouter at the root path
+app.use(authRouter);
 
-// Mock the authMiddleware to simplify testing routes
 jest.mock('../middlewares/auth.middleware', () => ({
   verifyToken: jest.fn((req, res, next) => {
-    req.user = { id: 1, login: 'testuser' }; // Mock authenticated user
+    req.user = { id: 1, login: 'testuser' }; 
     next();
   }),
 }));
 
-// Mock the database pool
 jest.mock('../db', () => ({
   __esModule: true,
   default: {
@@ -31,6 +29,7 @@ describe('Auth Routes', () => {
   let comparePasswordSpy: jest.SpyInstance;
   let generateTokensSpy: jest.SpyInstance;
   let verifyRefreshTokenSpy: jest.SpyInstance;
+  let deleteRefreshTokenSpy: jest.SpyInstance;
 
   beforeEach(() => {
     getUserByLoginSpy = jest.spyOn(authService, 'getUserByLogin');
@@ -38,8 +37,8 @@ describe('Auth Routes', () => {
     comparePasswordSpy = jest.spyOn(authService, 'comparePassword');
     generateTokensSpy = jest.spyOn(authService, 'generateTokens');
     verifyRefreshTokenSpy = jest.spyOn(authService, 'verifyRefreshToken');
+    deleteRefreshTokenSpy = jest.spyOn(authService, 'deleteRefreshToken');
 
-    // Reset mock for pool.execute before each test
     (pool.execute as jest.Mock).mockReset();
   });
 
@@ -72,7 +71,7 @@ describe('Auth Routes', () => {
     it('should return 409 if user already exists', async () => {
       getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password_hash: 'hashedpassword' }], undefined]); 
+        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]); 
 
       const res = await request(app)
         .post('/signup')
@@ -100,7 +99,7 @@ describe('Auth Routes', () => {
       comparePasswordSpy.mockResolvedValue(true);
       generateTokensSpy.mockReturnValue({ accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' });
       (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password_hash: 'hashedpassword' }], undefined]) 
+        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]) 
         .mockResolvedValueOnce([{}, undefined]);
 
       const res = await request(app)
@@ -134,7 +133,7 @@ describe('Auth Routes', () => {
       getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       comparePasswordSpy.mockResolvedValue(false);
       (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password_hash: 'hashedpassword' }], undefined]);
+        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]);
 
       const res = await request(app)
         .post('/signin')
@@ -202,13 +201,24 @@ describe('Auth Routes', () => {
 
   describe('GET /logout', () => {
     it('should logout successfully', async () => {
-      (pool.execute as jest.Mock).mockResolvedValueOnce([{}, undefined]);
+      deleteRefreshTokenSpy.mockResolvedValueOnce(undefined);
 
       const res = await request(app)
-        .get('/logout');
+        .post('/logout')
+        .send({ refreshToken: 'mockRefreshToken' });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Logged out successfully');
+      expect(deleteRefreshTokenSpy).toHaveBeenCalledWith('mockRefreshToken');
+    });
+
+    it('should return 400 if refresh token is not provided', async () => {
+      const res = await request(app)
+        .post('/logout')
+        .send({});
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('message', 'Refresh token is required');
     });
   });
 });

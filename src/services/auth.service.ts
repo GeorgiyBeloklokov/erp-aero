@@ -63,3 +63,11 @@ export const verifyRefreshToken = async (token: string): Promise<{ id: number; l
     return null;
   }
 };
+
+export const replaceRefreshToken = async (oldToken: string, newToken: string): Promise<void> => {
+  await pool.execute('UPDATE refresh_tokens SET token = ? WHERE token = ?', [newToken, oldToken]);
+};
+
+export const deleteRefreshToken = async (token: string): Promise<void> => {
+  await pool.execute('DELETE FROM refresh_tokens WHERE token = ?', [token]);
+};

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { hashPassword, createUser, generateTokens, getUserByLogin, comparePassword, verifyRefreshToken } from '../services/auth.service';
+import { hashPassword, createUser, generateTokens, getUserByLogin, comparePassword, verifyRefreshToken, replaceRefreshToken, deleteRefreshToken } from '../services/auth.service';
 import pool from '../db';
 
 export const signup = async (req: Request, res: Response) => {
@@ -55,8 +55,8 @@ export const signin = async (req: Request, res: Response) => {
     const { accessToken, refreshToken } = generateTokens(user.id );
 
     await pool.execute(
-      'UPDATE refresh_tokens SET token = ? WHERE user_id = ?',
-      [refreshToken, user.id]
+      'INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)',
+      [user.id, refreshToken]
     );
 
     res.status(200).json({ accessToken, refreshToken });
@@ -67,27 +67,24 @@ export const signin = async (req: Request, res: Response) => {
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-  const { refreshToken: token } = req.body;
+  const { refreshToken: oldToken } = req.body;
 
-  if (!token) {
+  if (!oldToken) {
     return res.status(400).json({ message: 'Refresh token is required' });
   }
 
   try {
-    const user = await verifyRefreshToken(token);
+    const user = await verifyRefreshToken(oldToken);
 
     if (!user) {
       return res.status(403).json({ message: 'Invalid refresh token' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    const { accessToken, refreshToken: newToken } = generateTokens(user.id);
 
-    await pool.execute(
-      'UPDATE refresh_tokens SET token = ? WHERE user_id = ?',
-      [refreshToken, user.id]
-    );
+    await replaceRefreshToken(oldToken, newToken);
 
-    res.status(200).json({ accessToken, refreshToken });
+    res.status(200).json({ accessToken, refreshToken: newToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -95,14 +92,14 @@ export const refreshToken = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
+  const { refreshToken } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  if (!refreshToken) {
+    return res.status(400).json({ message: 'Refresh token is required' });
   }
 
   try {
-    await pool.execute('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
+    await deleteRefreshToken(refreshToken);
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error(error);
