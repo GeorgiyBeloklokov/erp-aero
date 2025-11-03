@@ -1,3 +1,4 @@
+import { ResultSetHeader } from 'mysql2/promise';
 import pool from '../db';
 import { File } from '../types/file';
 
@@ -8,7 +9,7 @@ export const saveFileMetadata = async (file: Omit<File, 'id' | 'upload_date'>): 
     'INSERT INTO files (name, filename, extension, mime_type, size, upload_date, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [name, filename, extension, mime_type, size, upload_date, user_id]
   );
-  const insertId = (result as any).insertId;
+  const insertId = (result as ResultSetHeader).insertId;
   return { id: insertId, ...file, upload_date };
 };
 
@@ -23,7 +24,7 @@ export const getFiles = async (userId: number, listSize: number, page: number): 
 
 export const getFileById = async (id: number): Promise<File | null> => {
   const [rows] = await pool.execute('SELECT * FROM files WHERE id = ?', [id]);
-  const files = rows as any[];
+  const files = rows as File[];
   if (files.length === 0) {
     return null;
   }

@@ -50,7 +50,7 @@ describe('Auth Routes', () => {
   describe('POST /signup', () => {
     it('should register a new user successfully', async () => {
       getUserByLoginSpy.mockResolvedValue(null);
-      createUserSpy.mockResolvedValue({ id: 1, login: 'testuser', password_hash: 'hashedpassword' });
+      createUserSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       generateTokensSpy.mockReturnValue({ accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' });
       (pool.execute as jest.Mock)
         .mockResolvedValueOnce([[], undefined])
@@ -70,7 +70,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 409 if user already exists', async () => {
-      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password_hash: 'hashedpassword' });
+      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       (pool.execute as jest.Mock)
         .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password_hash: 'hashedpassword' }], undefined]); 
 
@@ -96,7 +96,7 @@ describe('Auth Routes', () => {
 
   describe('POST /signin', () => {
     it('should log in a user successfully', async () => {
-      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password_hash: 'hashedpassword' });
+      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       comparePasswordSpy.mockResolvedValue(true);
       generateTokensSpy.mockReturnValue({ accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' });
       (pool.execute as jest.Mock)
@@ -131,7 +131,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 401 for invalid credentials (incorrect password)', async () => {
-      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password_hash: 'hashedpassword' });
+      getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       comparePasswordSpy.mockResolvedValue(false);
       (pool.execute as jest.Mock)
         .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password_hash: 'hashedpassword' }], undefined]);
