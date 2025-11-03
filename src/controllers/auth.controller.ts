@@ -10,10 +10,15 @@ export const signup = async (req: Request, res: Response) => {
   }
 
   try {
+    const existingUser = await getUserByLogin(login);
+    if (existingUser) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
+
     const password_hash = await hashPassword(password);
     const user = await createUser(login, password_hash);
 
-    const { accessToken, refreshToken } = generateTokens({id: user.id});
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
     await pool.execute(
       'INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)',
@@ -47,7 +52,7 @@ export const signin = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user);
+    const { accessToken, refreshToken } = generateTokens(user.id );
 
     await pool.execute(
       'UPDATE refresh_tokens SET token = ? WHERE user_id = ?',
@@ -62,7 +67,7 @@ export const signin = async (req: Request, res: Response) => {
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-  const { token } = req.body;
+  const { refreshToken: token } = req.body;
 
   if (!token) {
     return res.status(400).json({ message: 'Refresh token is required' });
@@ -75,7 +80,7 @@ export const refreshToken = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Invalid refresh token' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user);
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
     await pool.execute(
       'UPDATE refresh_tokens SET token = ? WHERE user_id = ?',
@@ -90,14 +95,14 @@ export const refreshToken = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
-  const { token } = req.body;
+  const userId = req.user?.id;
 
-  if (!token) {
-    return res.status(400).json({ message: 'Refresh token is required' });
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
   }
 
   try {
-    await pool.execute('DELETE FROM refresh_tokens WHERE token = ?', [token]);
+    await pool.execute('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error(error);

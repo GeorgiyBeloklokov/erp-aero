@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 
 const storage = multer.diskStorage({
-  destination: './uploads',
+  destination: path.join(__dirname, '../../uploads'),
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   }
@@ -120,10 +120,10 @@ export const downloadFile = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const filePath = `./uploads/${file.filename}`;
+    const filePath = path.join(__dirname, '../../uploads', file.filename);
     res.download(filePath, file.name + file.extension);
   } catch (error) {
-    console.error(error);
+    console.error('Error during file download:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

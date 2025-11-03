@@ -9,9 +9,9 @@ export const hashPassword = async (password: string): Promise<string> => {
   return await bcrypt.hash(password, saltRounds);
 };
 
-export const generateTokens = (user: {id: number}) => {
-  const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET!, { expiresIn: '10m' });
-  const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET!);
+export const generateTokens = (id: number) => {
+  const accessToken = jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: '10m' });
+  const refreshToken = jwt.sign({ id }, process.env.JWT_REFRESH_SECRET!);
 
   return { accessToken, refreshToken };
 };
