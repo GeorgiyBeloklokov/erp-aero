@@ -11,13 +11,13 @@
     "dev": "nodemon --watch src/**/*.ts --exec \"ts-node --files src/server.ts\"",
     "build": "tsc",
     "db:init": "ts-node src/db/schema.ts",
-    "lint": "eslint . --ext .ts --fix",
+    "lint": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Georgiy Beloklokov",
+  "license": "MIT",
+  "description": "Crud server",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
