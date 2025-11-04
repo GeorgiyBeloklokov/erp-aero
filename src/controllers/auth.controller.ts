@@ -14,10 +14,6 @@ import pool from '../db';
 export const signup = async (req: Request, res: Response) => {
   const { login, password } = req.body;
 
-  if (!login || !password) {
-    return res.status(400).json({ message: 'Login and password are required' });
-  }
-
   try {
     const existingUser = await getUserByLogin(login);
     if (existingUser) {
@@ -40,10 +36,6 @@ export const signup = async (req: Request, res: Response) => {
 
 export const signin = async (req: Request, res: Response) => {
   const { login, password } = req.body;
-
-  if (!login || !password) {
-    return res.status(400).json({ message: 'Login and password are required' });
-  }
 
   try {
     const user = await getUserByLogin(login);
@@ -72,10 +64,6 @@ export const signin = async (req: Request, res: Response) => {
 export const refreshToken = async (req: Request, res: Response) => {
   const { refreshToken: oldToken } = req.body;
 
-  if (!oldToken) {
-    return res.status(400).json({ message: 'Refresh token is required' });
-  }
-
   try {
     const user = await verifyRefreshToken(oldToken);
 
@@ -96,10 +84,6 @@ export const refreshToken = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return res.status(400).json({ message: 'Refresh token is required' });
-  }
 
   try {
     await deleteRefreshToken(refreshToken);

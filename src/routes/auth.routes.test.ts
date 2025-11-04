@@ -85,7 +85,16 @@ describe('Auth Routes', () => {
       const res = await request(app).post('/signup').send({ login: 'testuser' });
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('message', 'Login and password are required');
+      expect(res.body).toHaveProperty('message', 'Validation error');
+      expect(res.body.errors[0].message).toBe('Invalid input: expected string, received undefined');
+    });
+
+    it('should return 400 if password is too short', async () => {
+      const res = await request(app).post('/signup').send({ login: 'testuser', password: '123' });
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body).toHaveProperty('message', 'Validation error');
+      expect(res.body.errors[0].message).toBe('Password must be at least 6 characters long');
     });
   });
 
@@ -140,7 +149,8 @@ describe('Auth Routes', () => {
       const res = await request(app).post('/signin').send({ login: 'testuser' });
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('message', 'Login and password are required');
+      expect(res.body).toHaveProperty('message', 'Validation error');
+      expect(res.body).toHaveProperty('errors');
     });
   });
 
@@ -177,11 +187,12 @@ describe('Auth Routes', () => {
       const res = await request(app).post('/signin/new_token').send({});
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('message', 'Refresh token is required');
+      expect(res.body).toHaveProperty('message', 'Validation error');
+      expect(res.body).toHaveProperty('errors');
     });
   });
 
-  describe('GET /logout', () => {
+  describe('POST /logout', () => {
     it('should logout successfully', async () => {
       deleteRefreshTokenSpy.mockResolvedValueOnce(undefined);
 
@@ -196,7 +207,8 @@ describe('Auth Routes', () => {
       const res = await request(app).post('/logout').send({});
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body).toHaveProperty('message', 'Refresh token is required');
+      expect(res.body).toHaveProperty('message', 'Validation error');
+      expect(res.body).toHaveProperty('errors');
     });
   });
 });
