@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { getUserById } from '../services/auth.service';
+import { config } from '../config';
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -16,7 +17,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: number };
+    const decoded = jwt.verify(token, config.JWT_SECRET) as { id: number };
     const user = await getUserById(decoded.id);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });

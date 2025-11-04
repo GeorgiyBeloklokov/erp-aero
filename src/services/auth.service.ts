@@ -4,6 +4,7 @@ import { ResultSetHeader } from 'mysql2/promise';
 import pool from '../db';
 import { RefreshToken } from '../types/refreshToken';
 import { User } from '../types/user';
+import { config } from '../config';
 
 const saltRounds = 10;
 
@@ -12,8 +13,8 @@ export const hashPassword = async (password: string): Promise<string> => {
 };
 
 export const generateTokens = (id: number) => {
-  const accessToken = jwt.sign({ id }, process.env.JWT_SECRET!, { expiresIn: '10m' });
-  const refreshToken = jwt.sign({ id }, process.env.JWT_REFRESH_SECRET!);
+  const accessToken = jwt.sign({ id }, config.JWT_SECRET, { expiresIn: '10m' });
+  const refreshToken = jwt.sign({ id }, config.JWT_REFRESH_SECRET);
 
   return { accessToken, refreshToken };
 };
@@ -58,7 +59,7 @@ export const comparePassword = async (password: string, password_hash: string): 
 
 export const verifyRefreshToken = async (token: string): Promise<{ id: number; login: string } | null> => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { id: number };
+    const decoded = jwt.verify(token, config.JWT_REFRESH_SECRET) as { id: number };
     const [rows] = await pool.execute('SELECT * FROM refresh_tokens WHERE token = ? AND user_id = ?', [
       token,
       decoded.id,
