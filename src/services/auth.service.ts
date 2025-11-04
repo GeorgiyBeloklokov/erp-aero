@@ -19,10 +19,7 @@ export const generateTokens = (id: number) => {
 };
 
 export const createUser = async (login: string, password_hash: string): Promise<User> => {
-  const [result] = await pool.execute(
-    'INSERT INTO users (login, password) VALUES (?, ?)',
-    [login, password_hash]
-  );
+  const [result] = await pool.execute('INSERT INTO users (login, password) VALUES (?, ?)', [login, password_hash]);
   const insertId = (result as ResultSetHeader).insertId;
   return { id: insertId, login, password: password_hash };
 };
@@ -37,7 +34,21 @@ export const getUserByLogin = async (login: string): Promise<User | null> => {
   return {
     id: user.id,
     login: user.login,
-    password: user.password
+    password: user.password,
+  };
+};
+
+export const getUserById = async (id: number): Promise<User | null> => {
+  const [rows] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+  const users = rows as User[];
+  if (users.length === 0) {
+    return null;
+  }
+  const user = users[0];
+  return {
+    id: user.id,
+    login: user.login,
+    password: user.password,
   };
 };
 
@@ -45,10 +56,13 @@ export const comparePassword = async (password: string, password_hash: string): 
   return await bcrypt.compare(password, password_hash);
 };
 
-export const verifyRefreshToken = async (token: string): Promise<{ id: number; login: string; } | null> => {
+export const verifyRefreshToken = async (token: string): Promise<{ id: number; login: string } | null> => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { id: number };
-    const [rows] = await pool.execute('SELECT * FROM refresh_tokens WHERE token = ? AND user_id = ?', [token, decoded.id]);
+    const [rows] = await pool.execute('SELECT * FROM refresh_tokens WHERE token = ? AND user_id = ?', [
+      token,
+      decoded.id,
+    ]);
     const tokens = rows as RefreshToken[];
     if (tokens.length === 0) {
       return null;
