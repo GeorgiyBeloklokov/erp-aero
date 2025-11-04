@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import authRouter from './auth.routes';
 import * as authService from '../services/auth.service';
-import * as authMiddleware from '../middlewares/auth.middleware';
+import * as _authMiddleware from '../middlewares/auth.middleware';
 import pool from '../db';
 
 const app = express();
@@ -11,7 +11,7 @@ app.use(authRouter);
 
 jest.mock('../middlewares/auth.middleware', () => ({
   verifyToken: jest.fn((req, res, next) => {
-    req.user = { id: 1, login: 'testuser' }; 
+    req.user = { id: 1, login: 'testuser' };
     next();
   }),
 }));
@@ -53,12 +53,10 @@ describe('Auth Routes', () => {
       generateTokensSpy.mockReturnValue({ accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' });
       (pool.execute as jest.Mock)
         .mockResolvedValueOnce([[], undefined])
-        .mockResolvedValueOnce([{ insertId: 1 }, undefined]) 
+        .mockResolvedValueOnce([{ insertId: 1 }, undefined])
         .mockResolvedValueOnce([{}, undefined]);
 
-      const res = await request(app)
-        .post('/signup')
-        .send({ login: 'testuser', password: 'password123' });
+      const res = await request(app).post('/signup').send({ login: 'testuser', password: 'password123' });
 
       expect(res.statusCode).toEqual(201);
       expect(res.body).toHaveProperty('accessToken', 'mockAccessToken');
@@ -70,12 +68,12 @@ describe('Auth Routes', () => {
 
     it('should return 409 if user already exists', async () => {
       getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
-      (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]); 
+      (pool.execute as jest.Mock).mockResolvedValueOnce([
+        [{ id: 1, login: 'testuser', password: 'hashedpassword' }],
+        undefined,
+      ]);
 
-      const res = await request(app)
-        .post('/signup')
-        .send({ login: 'testuser', password: 'password123' });
+      const res = await request(app).post('/signup').send({ login: 'testuser', password: 'password123' });
 
       expect(res.statusCode).toEqual(409);
       expect(res.body).toHaveProperty('message', 'User already exists');
@@ -84,9 +82,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 400 if login or password are not provided', async () => {
-      const res = await request(app)
-        .post('/signup')
-        .send({ login: 'testuser' });
+      const res = await request(app).post('/signup').send({ login: 'testuser' });
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'Login and password are required');
@@ -99,12 +95,10 @@ describe('Auth Routes', () => {
       comparePasswordSpy.mockResolvedValue(true);
       generateTokensSpy.mockReturnValue({ accessToken: 'mockAccessToken', refreshToken: 'mockRefreshToken' });
       (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]) 
+        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined])
         .mockResolvedValueOnce([{}, undefined]);
 
-      const res = await request(app)
-        .post('/signin')
-        .send({ login: 'testuser', password: 'password123' });
+      const res = await request(app).post('/signin').send({ login: 'testuser', password: 'password123' });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('accessToken', 'mockAccessToken');
@@ -116,12 +110,9 @@ describe('Auth Routes', () => {
 
     it('should return 401 for invalid credentials (user not found)', async () => {
       getUserByLoginSpy.mockResolvedValue(null);
-      (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[], undefined]);
+      (pool.execute as jest.Mock).mockResolvedValueOnce([[], undefined]);
 
-      const res = await request(app)
-        .post('/signin')
-        .send({ login: 'testuser', password: 'password123' });
+      const res = await request(app).post('/signin').send({ login: 'testuser', password: 'password123' });
 
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('message', 'Invalid credentials');
@@ -132,12 +123,12 @@ describe('Auth Routes', () => {
     it('should return 401 for invalid credentials (incorrect password)', async () => {
       getUserByLoginSpy.mockResolvedValue({ id: 1, login: 'testuser', password: 'hashedpassword' });
       comparePasswordSpy.mockResolvedValue(false);
-      (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, login: 'testuser', password: 'hashedpassword' }], undefined]);
+      (pool.execute as jest.Mock).mockResolvedValueOnce([
+        [{ id: 1, login: 'testuser', password: 'hashedpassword' }],
+        undefined,
+      ]);
 
-      const res = await request(app)
-        .post('/signin')
-        .send({ login: 'testuser', password: 'wrongpassword' });
+      const res = await request(app).post('/signin').send({ login: 'testuser', password: 'wrongpassword' });
 
       expect(res.statusCode).toEqual(401);
       expect(res.body).toHaveProperty('message', 'Invalid credentials');
@@ -146,9 +137,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 400 if login or password are not provided', async () => {
-      const res = await request(app)
-        .post('/signin')
-        .send({ login: 'testuser' });
+      const res = await request(app).post('/signin').send({ login: 'testuser' });
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'Login and password are required');
@@ -160,12 +149,10 @@ describe('Auth Routes', () => {
       verifyRefreshTokenSpy.mockResolvedValue({ id: 1, login: 'testuser' });
       generateTokensSpy.mockReturnValue({ accessToken: 'newMockAccessToken', refreshToken: 'newMockRefreshToken' });
       (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[{ id: 1, token: 'oldRefreshToken' }], undefined]) 
-        .mockResolvedValueOnce([{}, undefined]); 
+        .mockResolvedValueOnce([[{ id: 1, token: 'oldRefreshToken' }], undefined])
+        .mockResolvedValueOnce([{}, undefined]);
 
-      const res = await request(app)
-        .post('/signin/new_token')
-        .send({ refreshToken: 'oldRefreshToken' });
+      const res = await request(app).post('/signin/new_token').send({ refreshToken: 'oldRefreshToken' });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('accessToken', 'newMockAccessToken');
@@ -176,12 +163,9 @@ describe('Auth Routes', () => {
 
     it('should return 403 if refresh token is invalid', async () => {
       verifyRefreshTokenSpy.mockResolvedValue(null);
-      (pool.execute as jest.Mock)
-        .mockResolvedValueOnce([[], undefined]);
+      (pool.execute as jest.Mock).mockResolvedValueOnce([[], undefined]);
 
-      const res = await request(app)
-        .post('/signin/new_token')
-        .send({ refreshToken: 'invalidRefreshToken' });
+      const res = await request(app).post('/signin/new_token').send({ refreshToken: 'invalidRefreshToken' });
 
       expect(res.statusCode).toEqual(403);
       expect(res.body).toHaveProperty('message', 'Invalid refresh token');
@@ -190,9 +174,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 400 if refresh token is not provided', async () => {
-      const res = await request(app)
-        .post('/signin/new_token')
-        .send({});
+      const res = await request(app).post('/signin/new_token').send({});
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'Refresh token is required');
@@ -203,9 +185,7 @@ describe('Auth Routes', () => {
     it('should logout successfully', async () => {
       deleteRefreshTokenSpy.mockResolvedValueOnce(undefined);
 
-      const res = await request(app)
-        .post('/logout')
-        .send({ refreshToken: 'mockRefreshToken' });
+      const res = await request(app).post('/logout').send({ refreshToken: 'mockRefreshToken' });
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('message', 'Logged out successfully');
@@ -213,9 +193,7 @@ describe('Auth Routes', () => {
     });
 
     it('should return 400 if refresh token is not provided', async () => {
-      const res = await request(app)
-        .post('/logout')
-        .send({});
+      const res = await request(app).post('/logout').send({});
 
       expect(res.statusCode).toEqual(400);
       expect(res.body).toHaveProperty('message', 'Refresh token is required');

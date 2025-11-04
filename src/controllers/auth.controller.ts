@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
-import { hashPassword, createUser, generateTokens, getUserByLogin, comparePassword, verifyRefreshToken, replaceRefreshToken, deleteRefreshToken } from '../services/auth.service';
+import {
+  hashPassword,
+  createUser,
+  generateTokens,
+  getUserByLogin,
+  comparePassword,
+  verifyRefreshToken,
+  replaceRefreshToken,
+  deleteRefreshToken,
+} from '../services/auth.service';
 import pool from '../db';
 
 export const signup = async (req: Request, res: Response) => {
@@ -20,10 +29,7 @@ export const signup = async (req: Request, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens(user.id);
 
-    await pool.execute(
-      'INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)',
-      [user.id, refreshToken]
-    );
+    await pool.execute('INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)', [user.id, refreshToken]);
 
     res.status(201).json({ accessToken, refreshToken });
   } catch (error) {
@@ -52,12 +58,9 @@ export const signin = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user.id );
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
-    await pool.execute(
-      'INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)',
-      [user.id, refreshToken]
-    );
+    await pool.execute('INSERT INTO refresh_tokens (user_id, token) VALUES (?, ?)', [user.id, refreshToken]);
 
     res.status(200).json({ accessToken, refreshToken });
   } catch (error) {

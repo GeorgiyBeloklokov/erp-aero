@@ -13,9 +13,13 @@ describe('File Routes', () => {
   const testUserEmail = 'test@example.com';
 
   beforeAll(async () => {
-    await pool.execute('INSERT IGNORE INTO users (id, login, password) VALUES (?, ?, ?)', [testUserId, testUserEmail, 'hashedpassword']);
+    await pool.execute('INSERT IGNORE INTO users (id, login, password) VALUES (?, ?, ?)', [
+      testUserId,
+      testUserEmail,
+      'hashedpassword',
+    ]);
 
-    const user = { id: testUserId, email: testUserEmail }; 
+    const user = { id: testUserId, email: testUserEmail };
     const tokens = generateTokens(user.id);
     token = tokens.accessToken;
 
@@ -32,7 +36,7 @@ describe('File Routes', () => {
       fs.unlinkSync(testFilePath);
     }
     if (fs.existsSync(tempDir) && fs.readdirSync(tempDir).length === 0) {
-       fs.rmdirSync(tempDir);
+      fs.rmdirSync(tempDir);
     }
 
     await pool.execute('DELETE FROM files WHERE user_id = ?', [testUserId]);
@@ -65,9 +69,7 @@ describe('File Routes', () => {
     expect(uploadRes.statusCode).toEqual(201);
     const fileId = uploadRes.body.id;
 
-    const downloadRes = await request(app)
-      .get(`/file/download/${fileId}`)
-      .set('Authorization', `Bearer ${token}`);
+    const downloadRes = await request(app).get(`/file/download/${fileId}`).set('Authorization', `Bearer ${token}`);
 
     expect(downloadRes.statusCode).toEqual(200);
     expect(downloadRes.headers['content-type']).toEqual('text/plain; charset=utf-8');
@@ -75,35 +77,28 @@ describe('File Routes', () => {
   });
 
   it('should return 404 if file not found during download', async () => {
-    const res = await request(app)
-      .get('/file/download/nonexistentfileid')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/file/download/nonexistentfileid').set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toEqual(404);
     expect(res.body).toHaveProperty('message', 'File not found');
   });
 
   it('should return 400 if no file is provided for upload', async () => {
-    const res = await request(app)
-      .post('/file/upload')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).post('/file/upload').set('Authorization', `Bearer ${token}`);
 
     expect(res.statusCode).toEqual(400);
     expect(res.body).toHaveProperty('message', 'No file provided');
   });
 
   it('should return 401 if no token is provided', async () => {
-    const res = await request(app)
-      .post('/file/upload');
+    const res = await request(app).post('/file/upload');
 
     expect(res.statusCode).toEqual(401);
     expect(res.body).toHaveProperty('message', 'No token provided');
   });
 
   it('should return 403 if invalid token is provided', async () => {
-    const res = await request(app)
-      .post('/file/upload')
-      .set('Authorization', 'Bearer invalidtoken');
+    const res = await request(app).post('/file/upload').set('Authorization', 'Bearer invalidtoken');
 
     expect(res.statusCode).toEqual(403);
     expect(res.body).toHaveProperty('message', 'Invalid token');

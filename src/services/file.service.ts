@@ -7,7 +7,7 @@ export const saveFileMetadata = async (file: Omit<File, 'id' | 'upload_date'>): 
   const upload_date = new Date();
   const [result] = await pool.execute(
     'INSERT INTO files (name, filename, extension, mime_type, size, upload_date, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [name, filename, extension, mime_type, size, upload_date, user_id]
+    [name, filename, extension, mime_type, size, upload_date, user_id],
   );
   const insertId = (result as ResultSetHeader).insertId;
   return { id: insertId, ...file, upload_date };
@@ -15,10 +15,9 @@ export const saveFileMetadata = async (file: Omit<File, 'id' | 'upload_date'>): 
 
 export const getFiles = async (userId: number, listSize: number, page: number): Promise<File[]> => {
   const offset = (page - 1) * listSize;
-  const [rows] = await pool.execute(
-    `SELECT * FROM files WHERE user_id = ? LIMIT ${listSize} OFFSET ${offset}`,
-    [userId]
-  );
+  const [rows] = await pool.execute(`SELECT * FROM files WHERE user_id = ? LIMIT ${listSize} OFFSET ${offset}`, [
+    userId,
+  ]);
   return rows as File[];
 };
 
@@ -37,8 +36,12 @@ export const deleteFileById = async (id: number): Promise<void> => {
 
 export const updateFileById = async (id: number, file: Omit<File, 'id' | 'user_id' | 'upload_date'>): Promise<void> => {
   const { name, filename, extension, mime_type, size } = file;
-  await pool.execute(
-    'UPDATE files SET name = ?, filename = ?, extension = ?, mime_type = ?, size = ? WHERE id = ?',
-    [name, filename, extension, mime_type, size, id]
-  );
+  await pool.execute('UPDATE files SET name = ?, filename = ?, extension = ?, mime_type = ?, size = ? WHERE id = ?', [
+    name,
+    filename,
+    extension,
+    mime_type,
+    size,
+    id,
+  ]);
 };
