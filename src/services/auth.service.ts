@@ -86,3 +86,13 @@ export const replaceRefreshToken = async (oldToken: string, newToken: string): P
 export const deleteRefreshToken = async (token: string): Promise<void> => {
   await pool.execute('DELETE FROM refresh_tokens WHERE token = ?', [token]);
 };
+
+export const isTokenBlocked = async (token: string): Promise<boolean> => {
+  const [rows] = await pool.execute('SELECT * FROM blocked_tokens WHERE token = ?', [token]);
+  const tokens = rows as { id: number; token: string }[];
+  return tokens.length > 0;
+};
+
+export const blockAccessToken = async (token: string): Promise<void> => {
+  await pool.execute('INSERT INTO blocked_tokens (token) VALUES (?)', [token]);
+};

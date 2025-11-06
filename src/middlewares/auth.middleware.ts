@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { getUserById } from '../services/auth.service';
+import { getUserById, isTokenBlocked } from '../services/auth.service';
 import { config } from '../config';
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -17,6 +17,9 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   }
 
   try {
+    if (await isTokenBlocked(token)) {
+      return res.status(403).json({ message: 'Token is blocked' });
+    }
     const decoded = jwt.verify(token, config.JWT_SECRET) as { id: number };
     const user = await getUserById(decoded.id);
     if (!user) {

@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
   replaceRefreshToken,
   deleteRefreshToken,
+  blockAccessToken,
 } from '../services/auth.service';
 import pool from '../db';
 
@@ -84,8 +85,13 @@ export const refreshToken = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
+  const authHeader = req.headers.authorization;
+  const accessToken = authHeader?.split(' ')?.[1];
 
   try {
+    if (accessToken) {
+      await blockAccessToken(accessToken);
+    }
     await deleteRefreshToken(refreshToken);
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
